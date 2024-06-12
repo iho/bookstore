@@ -12,12 +12,26 @@ services:
       - ./internal/authors/schema.sql:/docker-entrypoint-initdb.d/create_tables.sql
     ports:
       - 5432:5432
+  redis:
+    image: redis
+    restart: always
+    ports:
+      - 6379:6379
   authors:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile_authors
     restart: always
     depends_on:
       - postgres
     ports:
       - 8080:8080
+  books:
+    build:
+      context: .
+      dockerfile: Dockerfile_books
+    restart: always
+    depends_on:
+      - redis
+    ports:
+      - 9090:9090

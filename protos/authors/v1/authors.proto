@@ -1,0 +1,60 @@
+syntax = "proto3";
+
+package authors.v1;
+
+option go_package = "authors";
+
+service AuthorsService {
+  rpc ListAuthors (ListAuthorsRequest) returns (ListAuthorsResponse);
+  rpc GetAuthor (GetAuthorRequest) returns (GetAuthorResponse);
+  rpc CreateAuthor (CreateAuthorRequest) returns (CreateAuthorResponse);
+  rpc UpdateAuthor (UpdateAuthorRequest) returns (UpdateAuthorResponse);
+  rpc DeleteAuthor (DeleteAuthorRequest) returns (DeleteAuthorResponse);
+}
+
+message Author {
+  string id = 1;
+  string name = 2;
+}
+
+message ListAuthorsRequest {
+  int32 offset = 1;
+  int32 limit = 2;
+}
+
+message ListAuthorsResponse {
+  repeated Author authors = 1;
+}
+
+message GetAuthorRequest {
+  string id = 1;
+}
+
+message GetAuthorResponse {
+  Author author = 1;
+}
+
+message CreateAuthorRequest {
+  string name = 1;
+}
+
+message CreateAuthorResponse {
+  Author author = 1;
+}
+
+message UpdateAuthorRequest {
+  string id = 1;
+  string name = 2;
+}
+
+message UpdateAuthorResponse {
+  Author author = 1;
+}
+
+message DeleteAuthorRequest {
+  string id = 1;
+}
+
+message DeleteAuthorResponse {
+  bool status = 1;
+} 

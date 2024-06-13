@@ -37,7 +37,7 @@ func main() {
 	router.Handle("/app", loaders.Middleware(cfg, c.Handler(srv)))
 
 	// register the wrapped handler
-	fmt.Println("Server is running on port 10000")
+	fmt.Println("Starting server on :10000")
 	if err := http.ListenAndServe(":10000", router); err != nil {
 		log.Fatal(err)
 	}

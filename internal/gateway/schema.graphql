@@ -23,7 +23,7 @@ type Book {
 }
 
 input AuthorsQueryInput {
-    IDs: [ID!]!
+  IDs: [ID!]!
 }
 
 input AuthorQueryInput {
@@ -31,10 +31,7 @@ input AuthorQueryInput {
 }
 
 input OrdersQueryInput {
-  totalPrice: Int
-  orderDate: String
-  limit: Int
-  offset: Int
+  IDs: [ID!]!
 }
 
 input OrderQueryInput {
@@ -113,9 +110,14 @@ type Author {
   books: [Book]
 }
 
+type OrderLine {
+  bookID: ID!
+  quantity: Int!
+}
+
 type Order {
   id: ID!
-  book: Book!
+  orderLines: [OrderLine!]!
   quantity: Int!
   totalPrice: Int!
   orderDate: String!

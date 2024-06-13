@@ -13,6 +13,7 @@ import (
 	"github.com/iho/bookstore/internal/gateway/loaders"
 	authorsV1 "github.com/iho/bookstore/protos/gen/authors/v1"
 	booksV1 "github.com/iho/bookstore/protos/gen/books/v1"
+	ordersV1 "github.com/iho/bookstore/protos/gen/orders/v1"
 )
 
 // CreateBook is the resolver for the createBook field.
@@ -23,7 +24,7 @@ func (r *mutationResolver) CreateBook(ctx context.Context, input model.CreateBoo
 		PublishedDate: input.PublishedDate,
 	})
 
-	res, err := r.booksv1connect.CreateBook(context.Background(), req)
+	res, err := r.booksv1connect.CreateBook(ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create book: %w", err)
 	}
@@ -32,7 +33,7 @@ func (r *mutationResolver) CreateBook(ctx context.Context, input model.CreateBoo
 		Id: res.Msg.Book.AuthorId,
 	})
 
-	authorRes, err := r.authorsv1connect.GetAuthor(context.Background(), authorReq)
+	authorRes, err := r.authorsv1connect.GetAuthor(ctx, authorReq)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get author: %w", err)
 	}
@@ -58,7 +59,7 @@ func (r *mutationResolver) UpdateBook(ctx context.Context, input model.UpdateBoo
 		PublishedDate: input.PublishedDate,
 	})
 
-	res, err := r.booksv1connect.UpdateBook(context.Background(), req)
+	res, err := r.booksv1connect.UpdateBook(ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to update book: %w", err)
 	}
@@ -67,7 +68,7 @@ func (r *mutationResolver) UpdateBook(ctx context.Context, input model.UpdateBoo
 		Id: res.Msg.Book.AuthorId,
 	})
 
-	authorRes, err := r.authorsv1connect.GetAuthor(context.Background(), authorReq)
+	authorRes, err := r.authorsv1connect.GetAuthor(ctx, authorReq)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get author: %w", err)
 	}
@@ -89,7 +90,7 @@ func (r *mutationResolver) DeleteBook(ctx context.Context, input model.DeleteBoo
 		Id: input.ID,
 	})
 
-	res, err := r.booksv1connect.DeleteBook(context.Background(), req)
+	res, err := r.booksv1connect.DeleteBook(ctx, req)
 	if err != nil {
 		return false, fmt.Errorf("failed to delete book: %w", err)
 	}
@@ -103,7 +104,7 @@ func (r *mutationResolver) CreateAuthor(ctx context.Context, input model.CreateA
 		Name: input.Name,
 	})
 
-	res, err := r.authorsv1connect.CreateAuthor(context.Background(), req)
+	res, err := r.authorsv1connect.CreateAuthor(ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create author: %w", err)
 	}
@@ -122,7 +123,7 @@ func (r *mutationResolver) UpdateAuthor(ctx context.Context, input model.UpdateA
 		Name: input.Name,
 	})
 
-	res, err := r.authorsv1connect.UpdateAuthor(context.Background(), req)
+	res, err := r.authorsv1connect.UpdateAuthor(ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to update author: %w", err)
 	}
@@ -136,12 +137,11 @@ func (r *mutationResolver) UpdateAuthor(ctx context.Context, input model.UpdateA
 
 // DeleteAuthor is the resolver for the deleteAuthor field.
 func (r *mutationResolver) DeleteAuthor(ctx context.Context, input model.DeleteAuthorInput) (bool, error) {
-
 	req := connect.NewRequest(&authorsV1.DeleteAuthorRequest{
 		Id: input.ID,
 	})
 
-	res, err := r.authorsv1connect.DeleteAuthor(context.Background(), req)
+	res, err := r.authorsv1connect.DeleteAuthor(ctx, req)
 	if err != nil {
 		return false, fmt.Errorf("failed to delete author: %w", err)
 	}
@@ -151,7 +151,42 @@ func (r *mutationResolver) DeleteAuthor(ctx context.Context, input model.DeleteA
 
 // CreateOrder is the resolver for the createOrder field.
 func (r *mutationResolver) CreateOrder(ctx context.Context, input model.CreateOrderInput) (*model.Order, error) {
-	panic(fmt.Errorf("not implemented: CreateOrder - createOrder"))
+	orderLinesInput := make([]*ordersV1.OrderLine, len(input.OrderLines))
+
+	for i, line := range input.OrderLines {
+		orderLinesInput[i] = &ordersV1.OrderLine{
+			BookId:   line.BookID,
+			Quantity: int32(line.Quantity),
+		}
+	}
+
+	req := connect.NewRequest(&ordersV1.CreateOrderRequest{
+		OrderLines: orderLinesInput,
+		OrderDate:  input.OrderDate,
+		TotalPrice: int32(input.TotalPrice),
+	})
+
+	res, err := r.ordersv1connect.CreateOrder(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create order: %w", err)
+	}
+
+	orderLines := make([]*model.OrderLine, len(res.Msg.Order.OrderLines))
+
+	for i, line := range res.Msg.Order.OrderLines {
+		orderLines[i] = &model.OrderLine{
+			BookID:   line.BookId,
+			Quantity: int(line.Quantity),
+		}
+	}
+
+	return &model.Order{
+		ID:         res.Msg.Order.Id,
+		Quantity:   len(res.Msg.Order.OrderLines),
+		OrderLines: orderLines,
+		TotalPrice: int(res.Msg.Order.TotalPrice),
+		OrderDate:  res.Msg.Order.OrderDate,
+	}, nil
 }
 
 // UpdateOrder is the resolver for the updateOrder field.
@@ -161,7 +196,16 @@ func (r *mutationResolver) UpdateOrder(ctx context.Context, input model.UpdateOr
 
 // DeleteOrder is the resolver for the deleteOrder field.
 func (r *mutationResolver) DeleteOrder(ctx context.Context, input model.DeleteOrderInput) (bool, error) {
-	panic(fmt.Errorf("not implemented: DeleteOrder - deleteOrder"))
+	req := connect.NewRequest(&ordersV1.DeleteOrderRequest{
+		Id: input.ID,
+	})
+
+	res, err := r.ordersv1connect.DeleteOrder(ctx, req)
+	if err != nil {
+		return false, fmt.Errorf("failed to delete order: %w", err)
+	}
+
+	return res.Msg.Status, nil
 }
 
 // Books is the resolver for the books field.
@@ -190,12 +234,14 @@ func (r *queryResolver) Author(ctx context.Context, input *model.AuthorQueryInpu
 
 // Orders is the resolver for the orders field.
 func (r *queryResolver) Orders(ctx context.Context, input *model.OrdersQueryInput) ([]*model.Order, error) {
-	panic(fmt.Errorf("not implemented: Orders - orders"))
+	loaders := loaders.For(ctx)
+	return loaders.OrderLoader.LoadAll(ctx, input.IDs)
 }
 
 // Order is the resolver for the order field.
 func (r *queryResolver) Order(ctx context.Context, input *model.OrderQueryInput) (*model.Order, error) {
-	panic(fmt.Errorf("not implemented: Order - order"))
+	loaders := loaders.For(ctx)
+	return loaders.OrderLoader.Load(ctx, input.ID)
 }
 
 // Mutation returns MutationResolver implementation.

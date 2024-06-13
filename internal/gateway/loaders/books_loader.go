@@ -52,6 +52,7 @@ func GetBooks(ctx context.Context, bookIDs []string) ([]*model.Book, error) {
 type Loaders struct {
 	BookLoader    *dataloadgen.Loader[string, *model.Book]
 	AuthourLoader *dataloadgen.Loader[string, *model.Author]
+	OrderLoader   *dataloadgen.Loader[string, *model.Order]
 }
 
 // NewLoaders instantiates data loaders for the middleware

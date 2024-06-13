@@ -63,11 +63,16 @@ type Mutation struct {
 }
 
 type Order struct {
-	ID         string `json:"id"`
-	Book       *Book  `json:"book"`
-	Quantity   int    `json:"quantity"`
-	TotalPrice int    `json:"totalPrice"`
-	OrderDate  string `json:"orderDate"`
+	ID         string       `json:"id"`
+	OrderLines []*OrderLine `json:"orderLines"`
+	Quantity   int          `json:"quantity"`
+	TotalPrice int          `json:"totalPrice"`
+	OrderDate  string       `json:"orderDate"`
+}
+
+type OrderLine struct {
+	BookID   string `json:"bookID"`
+	Quantity int    `json:"quantity"`
 }
 
 type OrderLineInput struct {
@@ -80,10 +85,7 @@ type OrderQueryInput struct {
 }
 
 type OrdersQueryInput struct {
-	TotalPrice *int    `json:"totalPrice,omitempty"`
-	OrderDate  *string `json:"orderDate,omitempty"`
-	Limit      *int    `json:"limit,omitempty"`
-	Offset     *int    `json:"offset,omitempty"`
+	IDs []string `json:"IDs"`
 }
 
 type Query struct {

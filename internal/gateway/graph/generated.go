@@ -72,11 +72,16 @@ type ComplexityRoot struct {
 	}
 
 	Order struct {
-		Book       func(childComplexity int) int
 		ID         func(childComplexity int) int
 		OrderDate  func(childComplexity int) int
+		OrderLines func(childComplexity int) int
 		Quantity   func(childComplexity int) int
 		TotalPrice func(childComplexity int) int
+	}
+
+	OrderLine struct {
+		BookID   func(childComplexity int) int
+		Quantity func(childComplexity int) int
 	}
 
 	Query struct {
@@ -285,13 +290,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.UpdateOrder(childComplexity, args["input"].(model.UpdateOrderInput)), true
 
-	case "Order.book":
-		if e.complexity.Order.Book == nil {
-			break
-		}
-
-		return e.complexity.Order.Book(childComplexity), true
-
 	case "Order.id":
 		if e.complexity.Order.ID == nil {
 			break
@@ -306,6 +304,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Order.OrderDate(childComplexity), true
 
+	case "Order.orderLines":
+		if e.complexity.Order.OrderLines == nil {
+			break
+		}
+
+		return e.complexity.Order.OrderLines(childComplexity), true
+
 	case "Order.quantity":
 		if e.complexity.Order.Quantity == nil {
 			break
@@ -319,6 +324,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Order.TotalPrice(childComplexity), true
+
+	case "OrderLine.bookID":
+		if e.complexity.OrderLine.BookID == nil {
+			break
+		}
+
+		return e.complexity.OrderLine.BookID(childComplexity), true
+
+	case "OrderLine.quantity":
+		if e.complexity.OrderLine.Quantity == nil {
+			break
+		}
+
+		return e.complexity.OrderLine.Quantity(childComplexity), true
 
 	case "Query.author":
 		if e.complexity.Query.Author == nil {
@@ -538,7 +557,7 @@ type Book {
 }
 
 input AuthorsQueryInput {
-    IDs: [ID!]!
+  IDs: [ID!]!
 }
 
 input AuthorQueryInput {
@@ -546,10 +565,7 @@ input AuthorQueryInput {
 }
 
 input OrdersQueryInput {
-  totalPrice: Int
-  orderDate: String
-  limit: Int
-  offset: Int
+  IDs: [ID!]!
 }
 
 input OrderQueryInput {
@@ -628,9 +644,14 @@ type Author {
   books: [Book]
 }
 
+type OrderLine {
+  bookID: ID!
+  quantity: Int!
+}
+
 type Order {
   id: ID!
-  book: Book!
+  orderLines: [OrderLine!]!
   quantity: Int!
   totalPrice: Int!
   orderDate: String!
@@ -1651,8 +1672,8 @@ func (ec *executionContext) fieldContext_Mutation_createOrder(ctx context.Contex
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Order_id(ctx, field)
-			case "book":
-				return ec.fieldContext_Order_book(ctx, field)
+			case "orderLines":
+				return ec.fieldContext_Order_orderLines(ctx, field)
 			case "quantity":
 				return ec.fieldContext_Order_quantity(ctx, field)
 			case "totalPrice":
@@ -1718,8 +1739,8 @@ func (ec *executionContext) fieldContext_Mutation_updateOrder(ctx context.Contex
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Order_id(ctx, field)
-			case "book":
-				return ec.fieldContext_Order_book(ctx, field)
+			case "orderLines":
+				return ec.fieldContext_Order_orderLines(ctx, field)
 			case "quantity":
 				return ec.fieldContext_Order_quantity(ctx, field)
 			case "totalPrice":
@@ -1843,8 +1864,8 @@ func (ec *executionContext) fieldContext_Order_id(_ context.Context, field graph
 	return fc, nil
 }
 
-func (ec *executionContext) _Order_book(ctx context.Context, field graphql.CollectedField, obj *model.Order) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Order_book(ctx, field)
+func (ec *executionContext) _Order_orderLines(ctx context.Context, field graphql.CollectedField, obj *model.Order) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Order_orderLines(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -1857,7 +1878,7 @@ func (ec *executionContext) _Order_book(ctx context.Context, field graphql.Colle
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Book, nil
+		return obj.OrderLines, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1869,12 +1890,12 @@ func (ec *executionContext) _Order_book(ctx context.Context, field graphql.Colle
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.Book)
+	res := resTmp.([]*model.OrderLine)
 	fc.Result = res
-	return ec.marshalNBook2ᚖgithubᚗcomᚋihoᚋbookstoreᚋinternalᚋgatewayᚋgraphᚋmodelᚐBook(ctx, field.Selections, res)
+	return ec.marshalNOrderLine2ᚕᚖgithubᚗcomᚋihoᚋbookstoreᚋinternalᚋgatewayᚋgraphᚋmodelᚐOrderLineᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Order_book(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Order_orderLines(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Order",
 		Field:      field,
@@ -1882,16 +1903,12 @@ func (ec *executionContext) fieldContext_Order_book(_ context.Context, field gra
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "id":
-				return ec.fieldContext_Book_id(ctx, field)
-			case "title":
-				return ec.fieldContext_Book_title(ctx, field)
-			case "author":
-				return ec.fieldContext_Book_author(ctx, field)
-			case "publishedDate":
-				return ec.fieldContext_Book_publishedDate(ctx, field)
+			case "bookID":
+				return ec.fieldContext_OrderLine_bookID(ctx, field)
+			case "quantity":
+				return ec.fieldContext_OrderLine_quantity(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Book", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type OrderLine", field.Name)
 		},
 	}
 	return fc, nil
@@ -2024,6 +2041,94 @@ func (ec *executionContext) fieldContext_Order_orderDate(_ context.Context, fiel
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _OrderLine_bookID(ctx context.Context, field graphql.CollectedField, obj *model.OrderLine) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_OrderLine_bookID(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.BookID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_OrderLine_bookID(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "OrderLine",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _OrderLine_quantity(ctx context.Context, field graphql.CollectedField, obj *model.OrderLine) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_OrderLine_quantity(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Quantity, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_OrderLine_quantity(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "OrderLine",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -2320,8 +2425,8 @@ func (ec *executionContext) fieldContext_Query_orders(ctx context.Context, field
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Order_id(ctx, field)
-			case "book":
-				return ec.fieldContext_Order_book(ctx, field)
+			case "orderLines":
+				return ec.fieldContext_Order_orderLines(ctx, field)
 			case "quantity":
 				return ec.fieldContext_Order_quantity(ctx, field)
 			case "totalPrice":
@@ -2384,8 +2489,8 @@ func (ec *executionContext) fieldContext_Query_order(ctx context.Context, field 
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Order_id(ctx, field)
-			case "book":
-				return ec.fieldContext_Order_book(ctx, field)
+			case "orderLines":
+				return ec.fieldContext_Order_orderLines(ctx, field)
 			case "quantity":
 				return ec.fieldContext_Order_quantity(ctx, field)
 			case "totalPrice":
@@ -4678,41 +4783,20 @@ func (ec *executionContext) unmarshalInputOrdersQueryInput(ctx context.Context, 
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"totalPrice", "orderDate", "limit", "offset"}
+	fieldsInOrder := [...]string{"IDs"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "totalPrice":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("totalPrice"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+		case "IDs":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("IDs"))
+			data, err := ec.unmarshalNID2ᚕstringᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.TotalPrice = data
-		case "orderDate":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("orderDate"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.OrderDate = data
-		case "limit":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("limit"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Limit = data
-		case "offset":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("offset"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Offset = data
+			it.IDs = data
 		}
 	}
 
@@ -5078,8 +5162,8 @@ func (ec *executionContext) _Order(ctx context.Context, sel ast.SelectionSet, ob
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "book":
-			out.Values[i] = ec._Order_book(ctx, field, obj)
+		case "orderLines":
+			out.Values[i] = ec._Order_orderLines(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -5095,6 +5179,50 @@ func (ec *executionContext) _Order(ctx context.Context, sel ast.SelectionSet, ob
 			}
 		case "orderDate":
 			out.Values[i] = ec._Order_orderDate(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var orderLineImplementors = []string{"OrderLine"}
+
+func (ec *executionContext) _OrderLine(ctx context.Context, sel ast.SelectionSet, obj *model.OrderLine) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, orderLineImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("OrderLine")
+		case "bookID":
+			out.Values[i] = ec._OrderLine_bookID(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "quantity":
+			out.Values[i] = ec._OrderLine_quantity(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -5901,6 +6029,60 @@ func (ec *executionContext) marshalNOrder2ᚖgithubᚗcomᚋihoᚋbookstoreᚋin
 	return ec._Order(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNOrderLine2ᚕᚖgithubᚗcomᚋihoᚋbookstoreᚋinternalᚋgatewayᚋgraphᚋmodelᚐOrderLineᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.OrderLine) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNOrderLine2ᚖgithubᚗcomᚋihoᚋbookstoreᚋinternalᚋgatewayᚋgraphᚋmodelᚐOrderLine(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNOrderLine2ᚖgithubᚗcomᚋihoᚋbookstoreᚋinternalᚋgatewayᚋgraphᚋmodelᚐOrderLine(ctx context.Context, sel ast.SelectionSet, v *model.OrderLine) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._OrderLine(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNOrderLineInput2ᚕᚖgithubᚗcomᚋihoᚋbookstoreᚋinternalᚋgatewayᚋgraphᚋmodelᚐOrderLineInputᚄ(ctx context.Context, v interface{}) ([]*model.OrderLineInput, error) {
 	var vSlice []interface{}
 	if v != nil {
@@ -6316,22 +6498,6 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 		return graphql.Null
 	}
 	res := graphql.MarshalBoolean(*v)
-	return res
-}
-
-func (ec *executionContext) unmarshalOInt2ᚖint(ctx context.Context, v interface{}) (*int, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := graphql.UnmarshalInt(v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.SelectionSet, v *int) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	res := graphql.MarshalInt(*v)
 	return res
 }
 

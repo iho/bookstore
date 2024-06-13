@@ -41,6 +41,8 @@ services:
     ports:
       - 9090:9090
   orders:
+    environment:
+      - MONGODB_URI=mongodb://mongo:27017
     build:
       context: .
       dockerfile: Dockerfile_orders
@@ -50,9 +52,17 @@ services:
     ports:
       - 9999:9999
   gateway:
+    environment:
+      - AUTHORS_URL=http://authors:8080
+      - BOOKS_URL=http://books:9090
+      - ORDERS_URL=http://orders:9999
     build:
       context: .
       dockerfile: Dockerfile_gateway
     restart: always
+    depends_on:
+      - authors
+      - books
+      - orders
     ports:
       - 10000:10000

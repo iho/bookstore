@@ -15,7 +15,7 @@ service OrdersService {
 message Order {
   string id = 1;
   repeated OrderLine order_lines = 2; 
-  float total_price = 3;
+  int32 total_price = 3;
   string order_date = 4;
 }
 
@@ -30,7 +30,7 @@ message ListOrdersResponse {
 
 message ListOrdersRequest {
   string book_id = 1;
-  int32 page = 2;
+  int32 offset = 2;
   int32 limit = 3;
 }
 
@@ -44,7 +44,7 @@ message GetOrderResponse {
 
 message CreateOrderRequest {
   repeated OrderLine order_lines = 1; 
-  float total_price = 2;
+  int32 total_price = 2;
   string order_date = 3;
 }
 
@@ -55,7 +55,7 @@ message CreateOrderResponse {
 message UpdateOrderRequest {
   string id = 1;
   repeated OrderLine order_lines = 2; 
-  float total_price = 3;
+  int32 total_price = 3;
   string order_date = 4;
 }
 

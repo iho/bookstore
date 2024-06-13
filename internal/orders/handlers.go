@@ -10,8 +10,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	// booksV1 "github.com/iho/bookstore/protos/gen/books/v1"
-	// authorsV1 "github.com/iho/bookstore/protos/gen/authors/v1"
 )
 
 const (

@@ -10,6 +10,7 @@ import (
 	"github.com/iho/bookstore/internal/gateway/graph/model"
 	"github.com/iho/bookstore/protos/gen/authors/v1/authorsv1connect"
 	"github.com/iho/bookstore/protos/gen/books/v1/booksv1connect"
+	"github.com/iho/bookstore/protos/gen/orders/v1/ordersv1connect"
 	"github.com/vikstrous/dataloadgen"
 
 	booksV1 "github.com/iho/bookstore/protos/gen/books/v1"
@@ -71,9 +72,17 @@ func NewLoaders(cfg *cfg.Config) *Loaders {
 		),
 	}
 
+	ol := &orderLoader{
+		ordersv1connect: ordersv1connect.NewOrdersServiceClient(
+			http.DefaultClient,
+			cfg.OrderServiceUrl,
+		),
+	}
+
 	return &Loaders{
 		BookLoader:    dataloadgen.NewLoader(bl.getBooks, dataloadgen.WithWait(time.Millisecond)),
 		AuthourLoader: dataloadgen.NewLoader(al.getAuthors, dataloadgen.WithWait(time.Millisecond)),
+		OrderLoader:   dataloadgen.NewLoader(ol.getOrders, dataloadgen.WithWait(time.Millisecond)),
 	}
 }
 

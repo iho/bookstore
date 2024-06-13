@@ -1,0 +1,122 @@
+type Query {
+  books(input: BooksQueryInput): [Book!]!
+  book(input: BookQueryInput): Book
+  authors(input: AuthorsQueryInput): [Author!]!
+  author(input: AuthorQueryInput): Author
+  orders(input: OrdersQueryInput): [Order!]!
+  order(input: OrderQueryInput): Order
+}
+
+input BooksQueryInput {
+  IDs: [ID!]!
+}
+
+input BookQueryInput {
+  id: ID!
+}
+
+type Book {
+  id: ID!
+  title: String!
+  author: Author!
+  publishedDate: String!
+}
+
+input AuthorsQueryInput {
+    IDs: [ID!]!
+}
+
+input AuthorQueryInput {
+  id: ID!
+}
+
+input OrdersQueryInput {
+  totalPrice: Int
+  orderDate: String
+  limit: Int
+  offset: Int
+}
+
+input OrderQueryInput {
+  id: ID!
+}
+
+type Mutation {
+  createBook(input: CreateBookInput!): Book!
+  updateBook(input: UpdateBookInput!): Book!
+  deleteBook(input: DeleteBookInput!): Boolean!
+
+  createAuthor(input: CreateAuthorInput!): Author!
+  updateAuthor(input: UpdateAuthorInput!): Author!
+  deleteAuthor(input: DeleteAuthorInput!): Boolean!
+
+  createOrder(input: CreateOrderInput!): Order!
+  updateOrder(input: UpdateOrderInput!): Order!
+  deleteOrder(input: DeleteOrderInput!): Boolean!
+}
+
+input CreateBookInput {
+  title: String!
+  authorId: ID!
+  publishedDate: String!
+}
+
+input UpdateBookInput {
+  id: ID!
+  title: String!
+  authorId: ID!
+  publishedDate: String!
+}
+
+input DeleteBookInput {
+  id: ID!
+}
+
+input CreateAuthorInput {
+  name: String!
+}
+
+input UpdateAuthorInput {
+  id: ID!
+  name: String!
+}
+
+input DeleteAuthorInput {
+  id: ID!
+}
+
+input CreateOrderInput {
+  orderLines: [OrderLineInput!]!
+  totalPrice: Int!
+  orderDate: String!
+}
+
+input OrderLineInput {
+  bookID: ID!
+  quantity: Int!
+}
+
+input UpdateOrderInput {
+  id: ID!
+  orderLines: [OrderLineInput!]
+  orderDate: String!
+  totalPrice: Int!
+}
+
+input DeleteOrderInput {
+  id: ID!
+}
+
+type Author {
+  id: ID!
+  name: String!
+  books: [Book]
+}
+
+type Order {
+  id: ID!
+  book: Book!
+  quantity: Int!
+  totalPrice: Int!
+  orderDate: String!
+}

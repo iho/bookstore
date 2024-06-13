@@ -3,7 +3,7 @@ WORKDIR /app
 COPY go.mod go.sum /app/
 RUN go mod download
 COPY . .
-RUN CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build -a -installsuffix cgo -o main cmd/authors/main.go
+RUN CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build -a -installsuffix cgo -o main cmd/gateway/main.go
 FROM golang:1.22
 WORKDIR /app
 COPY --from=builder  /app/main .

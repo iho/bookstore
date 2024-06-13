@@ -8,7 +8,7 @@ services:
       POSTGRES_PASSWORD: bookstore_password
       POSTGRES_DB: bookstore
     volumes:
-      - ./data:/var/lib/postgresql/data
+      - ./_data:/var/lib/postgresql/data
       - ./internal/authors/schema.sql:/docker-entrypoint-initdb.d/create_tables.sql
     ports:
       - 5432:5432
@@ -17,6 +17,11 @@ services:
     restart: always
     ports:
       - 6379:6379
+  mongo:
+    image: mongo
+    restart: always
+    ports:
+      - 27017:27017
   authors:
     build:
       context: .
@@ -35,3 +40,19 @@ services:
       - redis
     ports:
       - 9090:9090
+  orders:
+    build:
+      context: .
+      dockerfile: Dockerfile_orders
+    # restart: always
+    depends_on:
+      - mongo
+    ports:
+      - 9999:9999
+  gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile_gateway
+    restart: always
+    ports:
+      - 10000:10000
